@@ -139,6 +139,7 @@
         <li>Bookcase, unstacked, against the piano. Two top halves 57 wide × 53 tall × 14 deep. Base in front, 55 wide × 29 high × 14 deep.</li>
         <li>China cabinet, unstacked, in front of the bookcase. Top 55 wide × 48 tall, depth drawn at 18. Base 52 wide × 30 high × 18 deep.</li>
         <li>Sony TV, 50 wide × 34.5 tall × 5 deep, on edge in the right-hand gap beside the piano and bookcase. Screen toward the wall.</li>
+        <li>Table on edge in the left-hand gap, opposite the TV. 6 ft along the wall, 42 in tall, 5 in thick.</li>
       </ul>
 
       <h2>Selected band</h2>
@@ -185,7 +186,7 @@
         name: "Third band · 8–12 ft",
         x0: 8, x1: 12,
         color: 0x7d8fa3,
-        move: "Bookcase, then the china top, all on the floor. Against the piano: two bookcase halves, 57 in wide together, 53 tall, 14 deep, with the 55 × 29 × 14 base in front of them. In front of that base: the china top, 55 wide and 4 ft tall. Its depth was not given, so it is drawn 18 in deep to match its own base. The Sony TV stands in the right-hand gap beside this row: 50 in along the wall, 34.5 in tall, 5 in thick, screen toward the wall, just inside the beams. Strap the bookcase halves and the TV to the beam at 12 ft.",
+        move: "Bookcase, then the china top, all on the floor. Against the piano: two bookcase halves, 57 in wide together, 53 tall, 14 deep, with the 55 × 29 × 14 base in front of them. In front of that base: the china top, 55 wide and 4 ft tall. Its depth was not given, so it is drawn 18 in deep to match its own base. The Sony TV stands in the right-hand gap. The table stands in the left-hand gap: 6 ft along the wall, 42 in tall, 5 in thick, top toward the wall, just inside the beams. Strap both to the beam at 12 ft.",
         storage: "The walkway ends at the china base, in the next band toward the door. The piano closes the back wall."
       },
       {
@@ -400,7 +401,7 @@
 
     function renderDetail() {
       if (selected === "aisle") {
-        detail.innerHTML = "<h3>Center aisle · 2 ft</h3><p>Walkway up to the china cabinet base, about 6.7 ft in. Bookcase, china cabinet, piano, and mattress take the middle of the floor from there to the back wall.</p>";
+        detail.innerHTML = "<h3>Center aisle · 2 ft</h3><p>Walkway up to the china cabinet base, about 6.7 ft in. The TV and the table stand in the side gaps and do not block it.</p>";
         return;
       }
       const zone = ZONES.find((item) => item.id === selected) || ZONES[0];
@@ -624,6 +625,23 @@
     const screen = new THREE.Mesh(new THREE.BoxGeometry(tvAlong * 0.9, tvH * 0.8, 0.02), tvScreen);
     screen.position.set(tvX, FLOOR_Y + tvH / 2, tvZ + tvD / 2 + 0.008);
     cargo.add(screen);
+
+    const tableAlong = 6;
+    const tableUp = 42 * inch;
+    const tableD = 5 * inch;
+    const tableBack = backX - mattressT - inch;
+    const tableX = tableBack - tableAlong / 2;
+    const tableZ = -(IN.w / 2 - 0.25 - tableD / 2);
+    const tableTop = new THREE.MeshStandardMaterial({ color: 0x9a7349, roughness: 0.72 });
+    const table = new THREE.Mesh(new THREE.BoxGeometry(tableAlong, tableUp, tableD), tableTop);
+    table.position.set(tableX, FLOOR_Y + tableUp / 2, tableZ);
+    cargo.add(table);
+    const tableFace = new THREE.Mesh(
+      new THREE.BoxGeometry(tableAlong * 0.92, tableUp * 0.88, 0.02),
+      new THREE.MeshStandardMaterial({ color: 0xc4a06a, roughness: 0.6 })
+    );
+    tableFace.position.set(tableX, FLOOR_Y + tableUp / 2, tableZ - tableD / 2 - 0.008);
+    cargo.add(tableFace);
 
     pod.add(cargo);
 
