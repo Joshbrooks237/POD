@@ -140,6 +140,12 @@
         <li>China cabinet, unstacked, in front of the bookcase. Top 55 wide × 48 tall, depth drawn at 18. Base 52 wide × 30 high × 18 deep.</li>
         <li>Sony TV, 50 wide × 34.5 tall × 5 deep, on edge in the right-hand gap beside the piano and bookcase. Screen toward the wall.</li>
         <li>Table on edge in the left-hand gap, opposite the TV. 6 ft along the wall, 42 in tall, 5 in thick.</li>
+        <li>Washer WM2487HRMA and gas dryer DLG7188RM, side by side on the floor against the left wall. Each 27 in wide and 39 in tall. Washer depth 29 3/4 in. Dryer depth 28 1/3 in. Doors closed. Walkway on the right.</li>
+      </ul>
+
+      <h2>Held back</h2>
+      <ul>
+        <li>Mom’s armoire. 49 in wide, 22 in deep, 78.5 in tall. Fits the 7 ft 6 in ceiling with about 11.5 in to spare. Too deep for the side gaps. The laundry pair now holds the spot in front of the china base. If the armoire comes back, it stands in front of the washer, face about 2.1 ft from the door.</li>
       </ul>
 
       <h2>Selected band</h2>
@@ -178,7 +184,7 @@
         name: "Second band · 4–8 ft",
         x0: 4, x1: 8,
         color: 0x8a9a7b,
-        move: "The china cabinet base stands at the back of this band, about 6.7 to 8.2 ft: 52 in wide, 30 in high, 18 in deep. From 4 ft to that base the floor is still open. Strap line is the beam at 8 ft, just behind the base.",
+        move: "Washer and gas dryer sit side by side on the floor, against the left wall, doors closed. Each is 27 in wide and 39 in tall. The washer is 29 3/4 in deep, so the pair’s face is about 4.1 ft from the door. The dryer is 28 1/3 in deep. Stacked they would be 78 in tall with about 12 in of ceiling, and the top unit would be free to walk when the container tilts. The floor is here, so they stay down. A walkway remains on the right. Strap both to the beam at 4 ft. The washer door needs 51 in when open, so leave it shut for the move.",
         storage: "Weekly access. One step in from the door. Still reasonable to reach without emptying the front."
       },
       {
@@ -368,17 +374,17 @@
         addZoneMesh(zone, zone.x0, depth, IN.w / 2 - bay, bay, zone.name + " · right bay");
       });
       if (mode === "storage") {
-        const aisleLen = 6.75;
+        const aisleLen = 4.1;
         const aisle = new THREE.Mesh(
-          new THREE.BoxGeometry(aisleLen, 0.02, 2),
+          new THREE.BoxGeometry(aisleLen, 0.02, 1.8),
           new THREE.MeshStandardMaterial({ color: 0xf7f4ee, roughness: 1 })
         );
-        aisle.position.set(aisleLen / 2, FLOOR_Y + 0.12, 0);
+        aisle.position.set(aisleLen / 2, FLOOR_Y + 0.12, 2.23);
         aisle.userData.zoneId = "aisle";
         pod.add(aisle);
         zoneMeshes.push(aisle);
         const aisleLabel = labelSprite("2 ft aisle", 2.4);
-        aisleLabel.position.set(aisleLen / 2, FLOOR_Y + 1.15, 0);
+        aisleLabel.position.set(aisleLen / 2, FLOOR_Y + 1.15, 2.23);
         pod.add(aisleLabel);
         zoneMeshes.push(aisleLabel);
       }
@@ -401,7 +407,7 @@
 
     function renderDetail() {
       if (selected === "aisle") {
-        detail.innerHTML = "<h3>Center aisle · 2 ft</h3><p>Walkway up to the china cabinet base, about 6.7 ft in. The TV and the table stand in the side gaps and do not block it.</p>";
+        detail.innerHTML = "<h3>Right-hand walkway</h3><p>The washer and dryer sit on the left, so the walkway is on the right and stops at the washer face, about 4.1 ft in.</p>";
         return;
       }
       const zone = ZONES.find((item) => item.id === selected) || ZONES[0];
@@ -642,6 +648,33 @@
     );
     tableFace.position.set(tableX, FLOOR_Y + tableUp / 2, tableZ - tableD / 2 - 0.008);
     cargo.add(tableFace);
+
+    const laundryBack = chinaBaseX - chinaD / 2 - pieceGap;
+    const laundryH = 39 * inch;
+    const laundryW = 27 * inch;
+    const washerD = 29.75 * inch;
+    const dryerD = 28.33 * inch;
+    const laundryGap = inch;
+    const washerZ = -(IN.w / 2 - 0.25) + laundryW / 2;
+    const dryerZ = washerZ + laundryW + laundryGap;
+    const appliance = new THREE.MeshStandardMaterial({ color: 0xe4e2dc, roughness: 0.55, metalness: 0.12 });
+    const porthole = new THREE.MeshStandardMaterial({ color: 0x3c4652, roughness: 0.28, metalness: 0.45 });
+    const dryerDoorMat = new THREE.MeshStandardMaterial({ color: 0xb7bcc4, roughness: 0.4, metalness: 0.25 });
+
+    const washer = new THREE.Mesh(new THREE.BoxGeometry(washerD, laundryH, laundryW), appliance);
+    washer.position.set(laundryBack - washerD / 2, FLOOR_Y + laundryH / 2, washerZ);
+    cargo.add(washer);
+    const washerDoor = new THREE.Mesh(new THREE.CircleGeometry(0.55, 24), porthole);
+    washerDoor.position.set(laundryBack - washerD - 0.02, FLOOR_Y + laundryH * 0.55, washerZ);
+    washerDoor.rotation.y = -Math.PI / 2;
+    cargo.add(washerDoor);
+
+    const dryer = new THREE.Mesh(new THREE.BoxGeometry(dryerD, laundryH, laundryW), appliance);
+    dryer.position.set(laundryBack - dryerD / 2, FLOOR_Y + laundryH / 2, dryerZ);
+    cargo.add(dryer);
+    const dryerDoor = new THREE.Mesh(new THREE.BoxGeometry(0.02, laundryH * 0.5, laundryW * 0.62), dryerDoorMat);
+    dryerDoor.position.set(laundryBack - dryerD - 0.01, FLOOR_Y + laundryH * 0.62, dryerZ);
+    cargo.add(dryerDoor);
 
     pod.add(cargo);
 
