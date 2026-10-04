@@ -141,11 +141,14 @@
         <li>Sony TV, 50 wide × 34.5 tall × 5 deep, on edge in the right-hand gap beside the piano and bookcase. Screen toward the wall.</li>
         <li>Table on edge in the left-hand gap, opposite the TV. 6 ft along the wall, 42 in tall, 5 in thick.</li>
         <li>Washer WM2487HRMA and gas dryer DLG7188RM, side by side on the floor against the left wall. Each 27 in wide and 39 in tall. Washer depth 29 3/4 in. Dryer depth 28 1/3 in. Doors closed. Walkway on the right.</li>
+        <li>Bench in front of the washer, against the left wall. 46 in wide, 2 ft deep, 37 in tall, arms at 27 in. Boxes sit on the seat and under it. About 2 ft of floor stays clear at the door. Walkway stays open on the right.</li>
       </ul>
 
       <h2>Held back</h2>
       <ul>
-        <li>Mom’s armoire. 49 in wide, 22 in deep, 78.5 in tall. Fits the 7 ft 6 in ceiling with about 11.5 in to spare. Too deep for the side gaps. The laundry pair now holds the spot in front of the china base. If the armoire comes back, it stands in front of the washer, face about 2.1 ft from the door.</li>
+        <li>Mom’s armoire. 49 in wide, 22 in deep, 78.5 in tall. Fits the 7 ft 6 in ceiling with about 11.5 in to spare. Too deep for the side gaps. The bench now holds the spot in front of the washer. About 2 ft is left at the door, and the armoire is 22 in deep, so it would sit in the doorway. It stays out unless the bench moves.</li>
+        <li>Small rocking chair. Saved, not in the model yet. Size not measured.</li>
+        <li>Gaming computer chair. Saved, not in the model yet. Size not measured.</li>
       </ul>
 
       <h2>Selected band</h2>
@@ -176,7 +179,7 @@
         name: "Door band · 0–4 ft",
         x0: 0, x1: 4,
         color: 0xc4a574,
-        move: "Last in, first out. This is the only band you can touch without unloading everything behind it. Pack a flat face of boxes so the roll-up door closes and nothing tips into the doorway when the container is tilted onto the truck.",
+        move: "Last in, first out. The bench sits here, in front of the washer and against the left wall: 46 in wide, 2 ft deep, 37 in tall, arms at 27 in. Its back is at the washer face, so the front of the bench is about 2 ft from the door. Boxes go on the seat and under it. That leaves a clear strip at the door so the roll-up can close. The right side stays open as the walkway. Strap the bench to the beam at 4 ft.",
         storage: "Grab zone. Things you will actually open while the pod sits in the driveway: tools, out-of-season bins you still need, the boxes labeled for the first week."
       },
       {
@@ -657,9 +660,9 @@
     const laundryGap = inch;
     const washerZ = -(IN.w / 2 - 0.25) + laundryW / 2;
     const dryerZ = washerZ + laundryW + laundryGap;
-    const appliance = new THREE.MeshStandardMaterial({ color: 0xe4e2dc, roughness: 0.55, metalness: 0.12 });
+    const appliance = new THREE.MeshStandardMaterial({ color: 0xc8102e, roughness: 0.32, metalness: 0.22 });
     const porthole = new THREE.MeshStandardMaterial({ color: 0x3c4652, roughness: 0.28, metalness: 0.45 });
-    const dryerDoorMat = new THREE.MeshStandardMaterial({ color: 0xb7bcc4, roughness: 0.4, metalness: 0.25 });
+    const dryerDoorMat = new THREE.MeshStandardMaterial({ color: 0x8e0e22, roughness: 0.35, metalness: 0.2 });
 
     const washer = new THREE.Mesh(new THREE.BoxGeometry(washerD, laundryH, laundryW), appliance);
     washer.position.set(laundryBack - washerD / 2, FLOOR_Y + laundryH / 2, washerZ);
@@ -675,6 +678,83 @@
     const dryerDoor = new THREE.Mesh(new THREE.BoxGeometry(0.02, laundryH * 0.5, laundryW * 0.62), dryerDoorMat);
     dryerDoor.position.set(laundryBack - dryerD - 0.01, FLOOR_Y + laundryH * 0.62, dryerZ);
     cargo.add(dryerDoor);
+
+    const benchW = 46 * inch;
+    const benchD = 2;
+    const benchH = 37 * inch;
+    const armH = 27 * inch;
+    const seatH = 18 * inch;
+    const benchBack = laundryBack - washerD - inch;
+    const benchX = benchBack - benchD / 2;
+    const benchZ = -(IN.w / 2 - 0.25) + benchW / 2;
+    const cream = new THREE.MeshStandardMaterial({ color: 0xf3eee4, roughness: 0.62 });
+    const creamDark = new THREE.MeshStandardMaterial({ color: 0xe4d8c4, roughness: 0.55 });
+    const cushionMat = new THREE.MeshStandardMaterial({ color: 0xe7dfd2, roughness: 0.92 });
+    const legT = 2.5 * inch;
+    const seatT = 3 * inch;
+    const backT = 2 * inch;
+    const armT = 3 * inch;
+    [
+      [-1, -1],
+      [-1, 1],
+      [1, -1],
+      [1, 1]
+    ].forEach(([sx, sz]) => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(legT, seatH - seatT, legT), creamDark);
+      leg.position.set(
+        benchX + sx * (benchD / 2 - legT / 2 - inch),
+        FLOOR_Y + (seatH - seatT) / 2,
+        benchZ + sz * (benchW / 2 - legT / 2 - inch)
+      );
+      cargo.add(leg);
+    });
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(benchD, seatT, benchW), cream);
+    seat.position.set(benchX, FLOOR_Y + seatH - seatT / 2, benchZ);
+    cargo.add(seat);
+    const cushion = new THREE.Mesh(new THREE.BoxGeometry(benchD * 0.78, 2 * inch, benchW * 0.86), cushionMat);
+    cushion.position.set(benchX - benchD * 0.04, FLOOR_Y + seatH + inch, benchZ);
+    cargo.add(cushion);
+    const backRest = new THREE.Mesh(new THREE.BoxGeometry(backT, benchH - seatH + seatT, benchW), cream);
+    backRest.position.set(benchBack - backT / 2, FLOOR_Y + (benchH + seatH - seatT) / 2, benchZ);
+    cargo.add(backRest);
+    [-1, 1].forEach((side) => {
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(benchD * 0.72, 2.5 * inch, armT), cream);
+      arm.position.set(
+        benchX - benchD * 0.08,
+        FLOOR_Y + armH,
+        benchZ + side * (benchW / 2 - armT / 2)
+      );
+      cargo.add(arm);
+    });
+
+    const underH = 10 * inch;
+    const underD = 16 * inch;
+    const underW = 18 * inch;
+    [-1, 1].forEach((side, i) => {
+      placeBox(
+        underD,
+        underH,
+        underW,
+        benchX,
+        FLOOR_Y + underH / 2,
+        benchZ + side * (underW / 2 + inch),
+        i
+      );
+    });
+    const inH = 14 * inch;
+    const inD = 14 * inch;
+    const inW = 18 * inch;
+    [-1, 1].forEach((side, i) => {
+      placeBox(
+        inD,
+        inH,
+        inW,
+        benchX - 2 * inch,
+        FLOOR_Y + seatH + inH / 2 + 0.02,
+        benchZ + side * (inW / 2 + inch),
+        i + 1
+      );
+    });
 
     pod.add(cargo);
 
