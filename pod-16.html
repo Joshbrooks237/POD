@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>16-ft pod — load plan</title>
+  <style>
+    :root {
+      --bg: #e6e2da;
+      --panel: #f6f4f0;
+      --ink: #1d1c19;
+      --muted: #5e5a53;
+      --line: #ddd7cd;
+      --accent: #2f4534;
+      --accent-ink: #f4f7f2;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); }
+    body {
+      font: 14px/1.45 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      display: flex;
+      min-height: 100%;
+    }
+    #app { display: flex; width: 100%; height: 100%; }
+    #view { flex: 1; position: relative; min-width: 0; }
+    #view canvas { display: block; width: 100%; height: 100%; }
+    #status {
+      position: absolute;
+      left: 16px;
+      bottom: 14px;
+      color: var(--muted);
+      font: 12px/1.3 ui-sans-serif, system-ui, sans-serif;
+      pointer-events: none;
+    }
+    aside {
+      width: 340px;
+      flex: none;
+      background: var(--panel);
+      border-left: 1px solid var(--line);
+      padding: 22px 20px 28px;
+      overflow: auto;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin: 0 0 4px;
+    }
+    .sub { color: var(--muted); margin: 0 0 16px; font-size: 13px; }
+    .specs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .spec {
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+    }
+    .spec b { display: block; font-size: 15px; font-weight: 600; }
+    .spec span { color: var(--muted); font: 11px/1.3 ui-sans-serif, system-ui, sans-serif; }
+    .row { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+    button {
+      font: 12px/1 ui-sans-serif, system-ui, sans-serif;
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      padding: 7px 9px;
+      cursor: pointer;
+    }
+    button[aria-pressed="true"], button.active {
+      background: var(--accent);
+      color: var(--accent-ink);
+      border-color: var(--accent);
+    }
+    h2 {
+      font: 11px/1 ui-sans-serif, system-ui, sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 16px 0 8px;
+    }
+    #detail h3 { margin: 0 0 6px; font-size: 16px; }
+    #detail p { margin: 0; }
+    ul { margin: 8px 0 0; padding-left: 18px; }
+    li { margin: 0 0 6px; }
+    .source {
+      margin-top: 18px;
+      color: var(--muted);
+      font: 11px/1.4 ui-sans-serif, system-ui, sans-serif;
+    }
+    #error {
+      display: none;
+      position: absolute;
+      inset: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="view">
+      <div id="error"></div>
+      <div id="status">Drag to orbit · scroll to zoom · right-drag to pan</div>
+    </div>
+    <aside>
+      <h1>16-ft pod</h1>
+      <p class="sub">One door, on the short end. Depth is access. Height is weight.</p>
+      <div class="specs">
+        <div class="spec"><b>15' 6" × 7' × 7' 6"</b><span>Interior, PODS FAQ</span></div>
+        <div class="spec"><b>16' × 8' × 8'</b><span>Exterior shell</span></div>
+        <div class="spec"><b>~814 cu ft</b><span>Interior measured. Marketed ~835</span></div>
+        <div class="spec"><b>4,200 lb</b><span>Limit. Heaviest items under 3,150 lb</span></div>
+      </div>
+
+      <h2>Use</h2>
+      <div class="row" id="modes">
+        <button type="button" data-mode="move" aria-pressed="true">Moving load</button>
+        <button type="button" data-mode="storage" aria-pressed="false">Driveway storage</button>
+      </div>
+
+      <h2>View</h2>
+      <div class="row" id="views">
+        <button type="button" data-view="three">3/4</button>
+        <button type="button" data-view="door">From the door</button>
+        <button type="button" data-view="top">Top</button>
+        <button type="button" data-view="back">Back load</button>
+        <button type="button" id="roof" aria-pressed="false">Roof</button>
+        <button type="button" id="figure" aria-pressed="true">6-ft figure</button>
+      </div>
+
+      <h2>In the model</h2>
+      <ul>
+        <li>Queen mattress on edge, tight to the back wall. 80 in along the wall, 60 in tall, 11 in thick.</li>
+        <li>Upright piano directly in front of it. 55 in wide, 22 in deep, 44 in tall.</li>
+        <li>One layer of boxes on the piano top, and a row of flat boxes on the mattress edge.</li>
+        <li>Bookcase, unstacked, against the piano. Two top halves 57 wide × 53 tall × 14 deep. Base in front, 55 wide × 29 high × 14 deep.</li>
+        <li>China cabinet, unstacked, in front of the bookcase. Top 55 wide × 48 tall, depth drawn at 18. Base 52 wide × 30 high × 18 deep.</li>
+      </ul>
+
+      <h2>Selected band</h2>
+      <div id="detail"></div>
+      <p class="source">Interior and weight: PODS container FAQ. Wooden beams about every 3–4 ft; tie-down hooks are on some containers, not all. Bring straps. The roll-up header is drawn so you can see it eats the top of the doorway — measure the real opening on delivery before a tall piece is assigned to the door.</p>
+    </aside>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+    const IN = { l: 15.5, w: 7, h: 7.5 };
+    const FLOOR_Y = 0.25;
+    const CEIL_Y = FLOOR_Y + IN.h;
+
+    const ZONES = [
+      {
+        id: "door",
+        name: "Door band · 0–4 ft",
+        x0: 0, x1: 4,
+        color: 0xc4a574,
+        move: "Last in, first out. This is the only band you can touch without unloading everything behind it. Pack a flat face of boxes so the roll-up door closes and nothing tips into the doorway when the container is tilted onto the truck.",
+        storage: "Grab zone. Things you will actually open while the pod sits in the driveway: tools, out-of-season bins you still need, the boxes labeled for the first week."
+      },
+      {
+        id: "second",
+        name: "Second band · 4–8 ft",
+        x0: 4, x1: 8,
+        color: 0x8a9a7b,
+        move: "The china cabinet base stands at the back of this band, about 6.7 to 8.2 ft: 52 in wide, 30 in high, 18 in deep. From 4 ft to that base the floor is still open. Strap line is the beam at 8 ft, just behind the base.",
+        storage: "Weekly access. One step in from the door. Still reasonable to reach without emptying the front."
+      },
+      {
+        id: "third",
+        name: "Third band · 8–12 ft",
+        x0: 8, x1: 12,
+        color: 0x7d8fa3,
+        move: "Bookcase, then the china top, all on the floor. Against the piano: two bookcase halves, 57 in wide together, 53 tall, 14 deep, with the 55 × 29 × 14 base in front of them. In front of that base: the china top, 55 wide and 4 ft tall. Its depth was not given, so it is drawn 18 in deep to match its own base. Strap the bookcase halves to the beam at 12 ft.",
+        storage: "The walkway ends at the china base, in the next band toward the door. The piano closes the back wall."
+      },
+      {
+        id: "back",
+        name: "Back wall · 12–15.5 ft",
+        x0: 12, x1: 15.5,
+        color: 0x9a8478,
+        move: "First in. The queen stands on its 60 in side so the top is a ledge: 80 in along the wall, 11 in thick, 30 in of ceiling left. The piano is 55 in wide, so it stands in front of the mattress with the keyboard toward the door. Its top is 44 in high, and the boxes on it are 16 in, which still leaves about 30 in of ceiling. Strap it to the beam at 12 ft. Boxes on the mattress stay narrow, because that ledge is only 11 in deep.",
+        storage: "This block closes the pod. The aisle stops at the piano. Nothing you need while the container sits should go behind or on top of it."
+      }
+    ];
+
+    const detail = document.getElementById("detail");
+    const errorBox = document.getElementById("error");
+
+    function showError(message) {
+      errorBox.style.display = "block";
+      errorBox.textContent = message;
+    }
+
+    const viewEl = document.getElementById("view");
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(viewEl.clientWidth, viewEl.clientHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    viewEl.prepend(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe6e2da);
+
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.maxPolarAngle = Math.PI / 2.02;
+    controls.target.set(7.6, 2.4, 0);
+
+    scene.add(new THREE.HemisphereLight(0xfff8ee, 0xb7b2a8, 0.85));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.15);
+    sun.position.set(-8, 18, 10);
+    scene.add(sun);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 28),
+      new THREE.MeshStandardMaterial({ color: 0xd4cfc4, roughness: 1 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.set(8, 0, 0);
+    scene.add(ground);
+
+    const pod = new THREE.Group();
+    scene.add(pod);
+
+    const shellMat = new THREE.MeshStandardMaterial({
+      color: 0xd7dadf,
+      metalness: 0.62,
+      roughness: 0.38,
+      transparent: true,
+      opacity: 0.22,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    const trimMat = new THREE.MeshStandardMaterial({
+      color: 0x8e939a,
+      metalness: 0.7,
+      roughness: 0.35
+    });
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0xe4dccd, roughness: 0.92 });
+    const woodMat = new THREE.MeshStandardMaterial({ color: 0x8d6b45, roughness: 0.8 });
+
+    function box(w, h, d, material, x, y, z) {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+      mesh.position.set(x, y, z);
+      pod.add(mesh);
+      return mesh;
+    }
+
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(16.4, 0.08, 8.4), floorMat);
+    deck.position.set(8, 0.04, 0);
+    pod.add(deck);
+
+    const interiorFloor = new THREE.Mesh(new THREE.BoxGeometry(IN.l, 0.08, IN.w), floorMat);
+    interiorFloor.position.set(IN.l / 2, FLOOR_Y, 0);
+    pod.add(interiorFloor);
+
+    box(0.5, 8, 8, shellMat, 15.75, 4, 0);
+    const leftWall = box(16, 8, 0.5, shellMat, 8, 4, -3.75);
+    const rightWall = box(16, 8, 0.5, shellMat, 8, 4, 3.75);
+    const roof = box(16, 0.25, 8, shellMat, 8, 7.875, 0);
+    roof.visible = false;
+
+    const header = new THREE.Mesh(
+      new THREE.BoxGeometry(0.7, 0.85, 7.2),
+      new THREE.MeshStandardMaterial({ color: 0x9aa0a6, metalness: 0.55, roughness: 0.4 })
+    );
+    header.position.set(0.35, CEIL_Y - 0.42, 0);
+    pod.add(header);
+
+    function labelSprite(text, width) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 128;
+      const g = canvas.getContext("2d");
+      g.clearRect(0, 0, 512, 128);
+      g.fillStyle = "rgba(29,28,25,0.78)";
+      g.fillRect(16, 28, 480, 72);
+      g.fillStyle = "#f6f4f0";
+      g.font = "44px Georgia, serif";
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.fillText(text, 256, 64);
+      const map = new THREE.CanvasTexture(canvas);
+      map.colorSpace = THREE.SRGBColorSpace;
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map, transparent: true, depthWrite: false }));
+      sprite.scale.set(width, width * 0.25, 1);
+      return sprite;
+    }
+
+    const headerLabel = labelSprite("Roll-up header", 3.2);
+    headerLabel.position.set(0.9, CEIL_Y + 0.55, 0);
+    pod.add(headerLabel);
+
+    function gridLines() {
+      const pts = [];
+      const y = FLOOR_Y + 0.09;
+      for (let i = 0; i <= 15; i++) {
+        pts.push(i, y, -IN.w / 2, i, y, IN.w / 2);
+      }
+      pts.push(IN.l, y, -IN.w / 2, IN.l, y, IN.w / 2);
+      for (let z = -3; z <= 3; z++) {
+        pts.push(0, y, z, IN.l, y, z);
+      }
+      pts.push(0, y, -IN.w / 2, IN.l, y, -IN.w / 2);
+      pts.push(0, y, IN.w / 2, IN.l, y, IN.w / 2);
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+      const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0xc0b8ab }));
+      pod.add(lines);
+    }
+    gridLines();
+
+    [-3.5, 3.5].forEach((z) => {
+      [4, 8, 12].forEach((x) => {
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(0.28, IN.h - 0.08, 0.18), woodMat);
+        beam.position.set(x, FLOOR_Y + IN.h / 2, z + (z < 0 ? 0.16 : -0.16));
+        pod.add(beam);
+        const hook = new THREE.Mesh(
+          new THREE.TorusGeometry(0.12, 0.028, 8, 16),
+          trimMat
+        );
+        hook.position.set(x, FLOOR_Y + 3.2, z + (z < 0 ? 0.28 : -0.28));
+        hook.rotation.y = Math.PI / 2;
+        pod.add(hook);
+      });
+    });
+
+    const dim = labelSprite("15 ft 6 in interior", 4.4);
+    dim.position.set(IN.l / 2, 0.9, IN.w / 2 + 1.15);
+    pod.add(dim);
+    const widthLabel = labelSprite("7 ft wide", 2.6);
+    widthLabel.position.set(-0.2, FLOOR_Y + 1.3, 0);
+    pod.add(widthLabel);
+    const heightLabel = labelSprite("7 ft 6 in high", 3.3);
+    heightLabel.position.set(IN.l + 0.15, FLOOR_Y + IN.h / 2, 0);
+    pod.add(heightLabel);
+
+    const zoneMeshes = [];
+    function buildZones(mode) {
+      zoneMeshes.forEach((mesh) => pod.remove(mesh));
+      zoneMeshes.length = 0;
+      ZONES.forEach((zone) => {
+        const depth = zone.x1 - zone.x0;
+        if (mode === "move" || zone.id === "back") {
+          addZoneMesh(zone, zone.x0, depth, -IN.w / 2, IN.w, zone.name);
+          return;
+        }
+        const aisle = 2;
+        const bay = (IN.w - aisle) / 2;
+        addZoneMesh(zone, zone.x0, depth, -IN.w / 2, bay, zone.name + " · left bay");
+        addZoneMesh(zone, zone.x0, depth, IN.w / 2 - bay, bay, zone.name + " · right bay");
+      });
+      if (mode === "storage") {
+        const aisleLen = 6.75;
+        const aisle = new THREE.Mesh(
+          new THREE.BoxGeometry(aisleLen, 0.02, 2),
+          new THREE.MeshStandardMaterial({ color: 0xf7f4ee, roughness: 1 })
+        );
+        aisle.position.set(aisleLen / 2, FLOOR_Y + 0.12, 0);
+        aisle.userData.zoneId = "aisle";
+        pod.add(aisle);
+        zoneMeshes.push(aisle);
+        const aisleLabel = labelSprite("2 ft aisle", 2.4);
+        aisleLabel.position.set(aisleLen / 2, FLOOR_Y + 1.15, 0);
+        pod.add(aisleLabel);
+        zoneMeshes.push(aisleLabel);
+      }
+    }
+
+    function addZoneMesh(zone, x, depth, z, width, name) {
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(depth - 0.08, 0.045, width - 0.08),
+        new THREE.MeshStandardMaterial({ color: zone.color, transparent: true, opacity: 0.72, roughness: 1 })
+      );
+      mesh.position.set(x + depth / 2, FLOOR_Y + 0.13, z + width / 2);
+      mesh.userData.zoneId = zone.id;
+      mesh.userData.label = name;
+      pod.add(mesh);
+      zoneMeshes.push(mesh);
+    }
+
+    let mode = "move";
+    let selected = "door";
+
+    function renderDetail() {
+      if (selected === "aisle") {
+        detail.innerHTML = "<h3>Center aisle · 2 ft</h3><p>Walkway up to the china cabinet base, about 6.7 ft in. Bookcase, china cabinet, piano, and mattress take the middle of the floor from there to the back wall.</p>";
+        return;
+      }
+      const zone = ZONES.find((item) => item.id === selected) || ZONES[0];
+      const text = mode === "move" ? zone.move : zone.storage;
+      detail.innerHTML = `<h3>${zone.name}</h3><p>${text}</p>`;
+    }
+
+    function selectZone(id) {
+      selected = id;
+      zoneMeshes.forEach((mesh) => {
+        if (!mesh.material || mesh.userData.zoneId === "aisle") return;
+        const on = mesh.userData.zoneId === id;
+        mesh.material.opacity = on ? 0.95 : 0.45;
+        mesh.scale.y = on ? 2.4 : 1;
+      });
+      renderDetail();
+    }
+
+    buildZones(mode);
+    selectZone("back");
+
+    const figure = new THREE.Group();
+    const skin = new THREE.MeshStandardMaterial({ color: 0x3a3834, roughness: 0.7 });
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 1.5, 4, 8), skin);
+    torso.position.y = FLOOR_Y + 3.15;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), skin);
+    head.position.y = FLOOR_Y + 5.55;
+    const legs = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 1.7, 4, 8), skin);
+    legs.position.y = FLOOR_Y + 1.15;
+    figure.add(torso, head, legs);
+    figure.position.set(-1.4, 0, 1.6);
+    scene.add(figure);
+    const figureLabel = labelSprite("6 ft", 1.5);
+    figureLabel.position.set(-1.4, FLOOR_Y + 6.7, 1.6);
+    scene.add(figureLabel);
+
+    const inch = 1 / 12;
+    const mattressT = 11 * inch;
+    const mattressH = 60 * inch;
+    const mattressW = 80 * inch;
+    const pianoD = 22 * inch;
+    const pianoH = 44 * inch;
+    const pianoW = 55 * inch;
+    const backX = IN.l;
+    const pianoX = backX - mattressT - pianoD / 2;
+
+    const cargo = new THREE.Group();
+    const cloth = new THREE.MeshStandardMaterial({ color: 0xf3efe6, roughness: 0.96 });
+    const pianoBody = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.42, metalness: 0.12 });
+    const ivory = new THREE.MeshStandardMaterial({ color: 0xf3f0e8, roughness: 0.45 });
+    const cardboard = [
+      new THREE.MeshStandardMaterial({ color: 0xc4a36a, roughness: 0.92 }),
+      new THREE.MeshStandardMaterial({ color: 0xb08a52, roughness: 0.92 }),
+      new THREE.MeshStandardMaterial({ color: 0xd2b07a, roughness: 0.92 })
+    ];
+    const edgeMat = new THREE.LineBasicMaterial({ color: 0x6f5a3a });
+
+    function placeBox(w, h, d, x, y, z, colorIndex) {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), cardboard[colorIndex % cardboard.length]);
+      mesh.position.set(x, y, z);
+      cargo.add(mesh);
+      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), edgeMat);
+      edges.position.copy(mesh.position);
+      cargo.add(edges);
+    }
+
+    const mattressMesh = new THREE.Mesh(new THREE.BoxGeometry(mattressT, mattressH, mattressW), cloth);
+    mattressMesh.position.set(backX - mattressT / 2, FLOOR_Y + mattressH / 2, 0);
+    cargo.add(mattressMesh);
+    const mattressEdge = new THREE.LineSegments(
+      new THREE.EdgesGeometry(mattressMesh.geometry),
+      new THREE.LineBasicMaterial({ color: 0xc9c1b4 })
+    );
+    mattressEdge.position.copy(mattressMesh.position);
+    cargo.add(mattressEdge);
+
+    const piano = new THREE.Group();
+    const cabinet = new THREE.Mesh(new THREE.BoxGeometry(pianoD, pianoH, pianoW), pianoBody);
+    piano.add(cabinet);
+    const keys = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.14, pianoW * 0.84), ivory);
+    keys.position.set(-pianoD / 2 - 0.02, -pianoH * 0.08, 0);
+    piano.add(keys);
+    const pedals = new THREE.Mesh(
+      new THREE.BoxGeometry(0.05, 0.07, 0.55),
+      new THREE.MeshStandardMaterial({ color: 0xb7b1a4, metalness: 0.55, roughness: 0.35 })
+    );
+    pedals.position.set(-pianoD / 2 - 0.02, -pianoH / 2 + 0.12, 0);
+    piano.add(pedals);
+    piano.position.set(pianoX, FLOOR_Y + pianoH / 2, 0);
+    cargo.add(piano);
+
+    const mattressTop = FLOOR_Y + mattressH;
+    const mBoxH = 12 * inch;
+    const mBoxD = 10 * inch;
+    const mCount = 4;
+    const mSlot = mattressW / mCount;
+    for (let i = 0; i < mCount; i++) {
+      placeBox(
+        mBoxD,
+        mBoxH,
+        mSlot - 0.06,
+        backX - mattressT / 2,
+        mattressTop + mBoxH / 2 + 0.01,
+        -mattressW / 2 + mSlot * (i + 0.5),
+        i
+      );
+    }
+
+    const pianoTop = FLOOR_Y + pianoH;
+    const pBoxH = 16 * inch;
+    const pBoxD = 20 * inch;
+    const pCount = 3;
+    const pSlot = pianoW / pCount;
+    for (let i = 0; i < pCount; i++) {
+      placeBox(
+        pBoxD,
+        pBoxH,
+        pSlot - 0.08,
+        pianoX,
+        pianoTop + pBoxH / 2 + 0.01,
+        -pianoW / 2 + pSlot * (i + 0.5),
+        i + 1
+      );
+    }
+
+    const pieceD = 14 * inch;
+    const pieceGap = 2 * inch;
+    const pianoFront = backX - mattressT - pianoD;
+    const baseH = 29 * inch;
+    const baseW = 55 * inch;
+    const hutchH = 53 * inch;
+    const hutchW = 57 * inch;
+    const topsX = pianoFront - pieceGap - pieceD / 2;
+    const baseX = topsX - pieceD - pieceGap;
+    const wood = new THREE.MeshStandardMaterial({ color: 0x6d4328, roughness: 0.58 });
+    const woodDark = new THREE.MeshStandardMaterial({ color: 0x3e2618, roughness: 0.5 });
+    const glass = new THREE.MeshStandardMaterial({
+      color: 0xd7e4de,
+      roughness: 0.12,
+      metalness: 0.08,
+      transparent: true,
+      opacity: 0.55
+    });
+
+    const seamW = 0.04;
+    const pieceW = (hutchW - seamW) / 2;
+    [-1, 1].forEach((side) => {
+      const zCenter = side * (seamW / 2 + pieceW / 2);
+      const half = new THREE.Mesh(new THREE.BoxGeometry(pieceD, hutchH, pieceW), wood);
+      half.position.set(topsX, FLOOR_Y + hutchH / 2, zCenter);
+      cargo.add(half);
+      const door = new THREE.Mesh(
+        new THREE.BoxGeometry(0.03, hutchH * 0.7, pieceW * 0.72),
+        glass
+      );
+      door.position.set(topsX - pieceD / 2 - 0.012, FLOOR_Y + hutchH * 0.46, zCenter);
+      cargo.add(door);
+    });
+    const hutchSeam = new THREE.Mesh(new THREE.BoxGeometry(pieceD + 0.01, hutchH, seamW), woodDark);
+    hutchSeam.position.set(topsX, FLOOR_Y + hutchH / 2, 0);
+    cargo.add(hutchSeam);
+
+    const base = new THREE.Mesh(new THREE.BoxGeometry(pieceD, baseH, baseW), wood);
+    base.position.set(baseX, FLOOR_Y + baseH / 2, 0);
+    cargo.add(base);
+    const baseSeam = new THREE.Mesh(new THREE.BoxGeometry(0.025, baseH * 0.62, 0.02), woodDark);
+    baseSeam.position.set(baseX - pieceD / 2 - 0.01, FLOOR_Y + baseH * 0.42, 0);
+    cargo.add(baseSeam);
+
+    const chinaD = 18 * inch;
+    const chinaTopH = 48 * inch;
+    const chinaTopW = 55 * inch;
+    const chinaBaseH = 30 * inch;
+    const chinaBaseW = 52 * inch;
+    const bookFront = baseX - pieceD / 2;
+    const chinaTopX = bookFront - pieceGap - chinaD / 2;
+    const chinaBaseX = chinaTopX - chinaD - pieceGap;
+    const oak = new THREE.MeshStandardMaterial({ color: 0xc4a574, roughness: 0.62 });
+    const oakDark = new THREE.MeshStandardMaterial({ color: 0x8a6a3e, roughness: 0.5 });
+    const chinaGlass = new THREE.MeshStandardMaterial({
+      color: 0xd7e6ee,
+      roughness: 0.12,
+      metalness: 0.08,
+      transparent: true,
+      opacity: 0.5
+    });
+
+    const chinaTop = new THREE.Mesh(new THREE.BoxGeometry(chinaD, chinaTopH, chinaTopW), oak);
+    chinaTop.position.set(chinaTopX, FLOOR_Y + chinaTopH / 2, 0);
+    cargo.add(chinaTop);
+    [-1, 1].forEach((side) => {
+      const door = new THREE.Mesh(
+        new THREE.BoxGeometry(0.03, chinaTopH * 0.68, chinaTopW * 0.36),
+        chinaGlass
+      );
+      door.position.set(chinaTopX - chinaD / 2 - 0.012, FLOOR_Y + chinaTopH * 0.48, side * chinaTopW * 0.22);
+      cargo.add(door);
+    });
+    const chinaMullion = new THREE.Mesh(new THREE.BoxGeometry(0.02, chinaTopH * 0.68, 0.03), oakDark);
+    chinaMullion.position.set(chinaTopX - chinaD / 2 - 0.03, FLOOR_Y + chinaTopH * 0.48, 0);
+    cargo.add(chinaMullion);
+
+    const chinaBase = new THREE.Mesh(new THREE.BoxGeometry(chinaD, chinaBaseH, chinaBaseW), oak);
+    chinaBase.position.set(chinaBaseX, FLOOR_Y + chinaBaseH / 2, 0);
+    cargo.add(chinaBase);
+    const chinaBaseSeam = new THREE.Mesh(new THREE.BoxGeometry(0.025, chinaBaseH * 0.6, 0.02), oakDark);
+    chinaBaseSeam.position.set(chinaBaseX - chinaD / 2 - 0.01, FLOOR_Y + chinaBaseH * 0.42, 0);
+    cargo.add(chinaBaseSeam);
+
+    pod.add(cargo);
+
+    function frame() {
+      const w = viewEl.clientWidth;
+      const h = viewEl.clientHeight;
+      if (w && h) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      }
+    }
+    frame();
+    addEventListener("resize", frame);
+
+    function setView(name) {
+      const spots = {
+        three: { cam: [-6.2, 7.2, 12.4], at: [7.2, 2.2, 0] },
+        door: { cam: [-11.5, 4.6, 0.2], at: [7, 3.2, 0] },
+        top: { cam: [7.75, 24, 0.02], at: [7.75, 0, 0] },
+        back: { cam: [2.4, 6.4, 13.2], at: [10.2, 2.4, 0] }
+      };
+      const spot = spots[name];
+      camera.position.set(...spot.cam);
+      controls.target.set(...spot.at);
+      controls.update();
+      document.querySelectorAll("#views [data-view]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.view === name);
+      });
+    }
+    setView("back");
+
+    document.getElementById("modes").addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      mode = button.dataset.mode;
+      document.querySelectorAll("#modes button").forEach((item) => {
+        item.setAttribute("aria-pressed", String(item === button));
+      });
+      buildZones(mode);
+      selectZone(selected === "aisle" ? "door" : selected);
+    });
+
+    document.getElementById("views").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-view]");
+      if (!button) return;
+      setView(button.dataset.view);
+    });
+
+    document.getElementById("roof").addEventListener("click", (event) => {
+      roof.visible = !roof.visible;
+      event.currentTarget.setAttribute("aria-pressed", String(roof.visible));
+    });
+    document.getElementById("figure").addEventListener("click", (event) => {
+      const on = !figure.visible;
+      figure.visible = on;
+      figureLabel.visible = on;
+      event.currentTarget.setAttribute("aria-pressed", String(on));
+    });
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    renderer.domElement.addEventListener("pointerdown", (event) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(zoneMeshes.filter((mesh) => mesh.isMesh));
+      if (hits[0]?.object.userData.zoneId) selectZone(hits[0].object.userData.zoneId);
+    });
+
+    function tick() {
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(tick);
+    }
+    tick();
+
+    window.addEventListener("error", () => {
+      showError("The 3D view failed to start. Open this file through the local page, not as a saved screenshot.");
+    });
+  </script>
+</body>
+</html>
